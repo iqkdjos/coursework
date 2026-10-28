@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="section" style="max-width:720px;margin-inline:auto">
+  <h1>Резервные коды</h1>
+  <p class="subtitle">Сохраните их: это единственный способ войти, если телефон с «Яндекс Ключом»
+    недоступен. Каждый код используется один раз, повторная выдача отменяет предыдущие.</p>
+
+  {% if codes %}
+    <div class="secret-box">
+      <ol class="codes-list">
+        {% for code in codes %}<li>{{ code }}</li>{% endfor %}
+      </ol>
+    </div>
+    <p class="small muted">После закрытия страницы коды больше не будут показаны — в базе хранится
+      только их хеш.</p>
+  {% else %}
+    <p class="alert alert--info">Резервные коды не показаны. Нажмите «Выдать новые коды» на странице
+      безопасности.</p>
+  {% endif %}
+
+  <div class="row" style="margin-top:1.2rem">
+    {% if next_step == "login" %}
+      <a class="btn" href="{% url 'accounts:login' %}">Перейти ко входу</a>
+    {% else %}
+      <a class="btn" href="{% url 'accounts:profile' %}">В личный кабинет</a>
+    {% endif %}
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'accounts:recovery_regenerate' %}" class="inline-form">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--outline">Выдать новые коды</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

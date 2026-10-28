@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="small"><a href="{% url 'events:admin_event_list' %}">&larr; Мероприятия</a></p>
+
+<div class="section">
+  <div class="row spread">
+    <h1>{{ event.title }}</h1>
+    <span class="badge badge--{{ event.status }}">{{ event.get_status_display }}</span>
+  </div>
+  <div class="card__meta" style="margin:.4rem 0 1rem">
+    <span>{{ event.get_event_type_display }}</span>
+    <span>{{ event.start_at|date:"d.m.Y H:i" }}</span>
+    {% if event.location %}<span>{{ event.location }}</span>{% endif %}
+    <span>до {{ event.bonus_points }} доп. баллов</span>
+    <span>{% if seats_left is not None %}записано {{ event.enrollments_count }}/{{ event.capacity }}{% else %}записано {{ event.enrollments_count }}{% endif %}</span>
+  </div>
+  <p class="small muted">{{ event.description|linebreaksbr }}</p>
+
+  <div class="row">
+    <a class="btn btn--outline btn--sm" href="{% url 'events:admin_event_update' event.pk %}">Редактировать</a>
+    {% if event.status != 'published' %}
+      <form method="post" action="{% url 'events:admin_event_status' event.pk %}" class="inline-form">
+        {% csrf_token %}<input type="hidden" name="status" value="published">
+        <button type="submit" class="btn btn--sm">Опубликовать</button>
+      </form>
+    {% endif %}
+    {% if event.status != 'draft' %}
+      <form method="post" action="{% url 'events:admin_event_status' event.pk %}" class="inline-form">
+        {% csrf_token %}<input type="hidden" name="status" value="draft">
+        <button type="submit" class="btn btn--outline btn--sm">В черновик</button>
+      </form>
+    {% endif %}
+    {% if event.status != 'cancelled' %}
+      <form method="post" action="{% url 'events:admin_event_status' event.pk %}" class="inline-form"
+            onsubmit="return confirm('Отменить мероприятие? Все записанные получат уведомление в MAX.');">
+        {% csrf_token %}<input type="hidden" name="status" value="cancelled">
+        <button type="submit" class="btn btn--danger btn--sm">Отменить мероприятие</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section">
+  <h2 style="margin-top:0">Записавшиеся и выставление баллов</h2>
+  <p class="small muted">Баллы (0–10) сохраняются по каждой записи отдельно и суммируются в
+    «дополнительные баллы» абитуриента. Проставление баллов автоматически помечает участие,
+    а абитуриент с привязанным MAX получает уведомление.</p>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Абитуриент</th><th>Направление</th><th>Баллы ЕГЭ</th><th>Запись</th><th>Посещение</th><th style="min-width:260px">Баллы</th></tr></thead>
+      <tbody>
+      {% for enrollment in enrollments %}
+        {% with point_form=point_forms %}
+        <tr>
+          <td>
+            <a href="{% url 'events:admin_applicant_detail' enrollment.applicant_id %}">{{ enrollment.applicant.full_display_name }}</a>
+            <div class="small muted mono">{{ enrollment.applicant.email }}</div>
+          </td>
+          <td class="small">{{ enrollment.applicant.profile.direction|default:"—" }}</td>
+          <td class="num">{{ enrollment.applicant.profile.total_exam_points }}</td>
+          <td class="small nowrap">{{ enrollment.registered_at|date:"d.m.Y H:i" }}</td>
+          <td>
+            <form method="post" action="{% url 'events:admin_mark_attended' enrollment.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn--outline btn--sm">{{ enrollment.get_status_display }}</button>
+            </form>
+          </td>
+          <td>
+            <form method="post" action="{% url 'events:admin_award_points' enrollment.pk %}" class="row">
+              {% csrf_token %}
+              <input type="number" name="points" min="0" max="10" style="width:70px"
+                     value="{% if enrollment.points is not None %}{{ enrollment.points }}{% endif %}"
+                     placeholder="—">
+              <input type="text" name="note" maxlength="250" value="{{ enrollment.points_note }}"
+                     placeholder="Основание" style="flex:1;min-width:110px">
+              <button type="submit" class="btn btn--sm">ОК</button>
+            </form>
+            {% if enrollment.points_set_at %}
+              <div class="small muted">{{ enrollment.points_set_at|date:"d.m.Y H:i" }} · {{ enrollment.points_set_by.email|default:"система" }}</div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endwith %}
+      {% empty %}
+        <tr><td colspan="6" class="muted">Пока никто не записался.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

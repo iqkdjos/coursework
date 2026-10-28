@@ -1,0 +1,83 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>{{ page_title|default:"Система абитуриента" }} · ИМиКН БГУ</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body class="{% if is_admin_user %}theme-office{% endif %}">
+<header class="topbar">
+  <div class="container topbar__inner">
+    <a class="brand" href="{% url 'home' %}">
+      <span class="brand__mark">ИМиКН</span>
+      <span class="brand__text">
+        <strong>Система абитуриента</strong>
+        <small>Бурятский государственный университет</small>
+      </span>
+    </a>
+    <nav class="nav">
+      {% if user.is_authenticated %}
+        {% if is_applicant_user %}
+          <a href="{% url 'events:catalog' %}">Мероприятия</a>
+          <a href="{% url 'events:my_events' %}">Мои записи</a>
+          <a href="{% url 'accounts:profile' %}">Анкета</a>
+        {% endif %}
+        {% if is_admin_user %}
+          <a href="{% url 'events:admin_dashboard' %}">Панель</a>
+          <a href="{% url 'events:admin_event_list' %}">Мероприятия</a>
+          <a href="{% url 'events:admin_applicant_list' %}">Абитуриенты</a>
+        {% endif %}
+        <a href="{% url 'accounts:max_account' %}">MAX-бот</a>
+        <a href="{% url 'accounts:account_settings' %}">Безопасность</a>
+        <form method="post" action="{% url 'accounts:logout' %}" class="inline-form">
+          {% csrf_token %}
+          <button type="submit" class="link-button">Выйти ({{ user.email }})</button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}">Вход</a>
+        <a class="btn btn--ghost" href="{% url 'accounts:register' %}">Регистрация</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+{% if user.is_authenticated %}
+  <div class="statusline">
+    <div class="container statusline__inner">
+      <span class="pill pill--role">{{ user.get_role_display }}</span>
+      {% if two_factor_enabled %}
+        <span class="pill pill--ok" title="Второй фактор подтверждён при входе">2FA включена</span>
+      {% else %}
+        <span class="pill pill--warn">2FA не настроена</span>
+      {% endif %}
+      {% if two_factor_method %}<span class="pill">вход: {{ two_factor_method }}</span>{% endif %}
+      {% if max_enabled %}
+        {% if max_linked %}<span class="pill pill--ok">MAX привязан</span>
+        {% else %}<span class="pill">MAX не привязан</span>{% endif %}
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+<main class="container main">
+  {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+        <li class="alert alert--{{ message.tags|default:'info' }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <p>Кафедра информационных технологий · Институт математики, физики и компьютерных наук · БГУ, Улан-Удэ</p>
+    <p class="footer__meta">Пароли — Argon2id, второй фактор — TOTP («Яндекс Ключ»), уведомления — бот в MAX, СУБД — PostgreSQL.</p>
+  </div>
+</footer>
+</body>
+</html>

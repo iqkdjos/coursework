@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="small"><a href="{% url 'events:admin_applicant_list' %}">&larr; Абитуриенты</a></p>
+
+<div class="row spread">
+  <div>
+    <h1>{{ profile.full_name|default:applicant.email }}</h1>
+    <p class="subtitle">{{ applicant.email }} · {{ applicant.get_role_display }} · регистрация {{ applicant.date_joined|date:"d.m.Y" }}</p>
+  </div>
+  <div class="row">
+    <span class="badge badge--draft">{{ profile.get_status_display }}</span>
+    {% if applicant.max_user_id %}<span class="badge badge--attended">MAX привязан</span>{% else %}<span class="badge">MAX не привязан</span>{% endif %}
+  </div>
+</div>
+
+<div class="grid grid--4" style="margin:1.2rem 0 1.5rem">
+  <div class="stat"><div class="stat__value">{{ profile.total_exam_points }}</div><div class="stat__label">Баллы ЕГЭ</div></div>
+  <div class="stat"><div class="stat__value">{{ profile.bonus_points }}</div><div class="stat__label">Доп. баллы</div></div>
+  <div class="stat"><div class="stat__value">{{ profile.total_exam_points|add:profile.bonus_points }}</div><div class="stat__label">Итого</div></div>
+  <div class="stat"><div class="stat__value">{{ enrollments|length }}</div><div class="stat__label">Записей</div></div>
+</div>
+
+<div class="grid grid--2">
+  <div class="section">
+    <h2 style="margin-top:0">Данные анкеты</h2>
+    <table class="data">
+      <tbody>
+        <tr><th>Направление</th><td>{{ profile.get_direction_display|default:"—" }}</td></tr>
+        <tr><th>Дата рождения</th><td>{{ profile.birth_date|date:"d.m.Y"|default:"—" }}</td></tr>
+        <tr><th>Телефон</th><td>{{ profile.phone|default:"—" }}</td></tr>
+        <tr><th>Регион</th><td>{{ profile.region|default:"—" }}</td></tr>
+        <tr><th>Школа</th><td>{{ profile.school|default:"—" }}</td></tr>
+        <tr><th>ЕГЭ русский</th><td>{{ profile.exam_russian|default:"—" }}</td></tr>
+        <tr><th>ЕГЭ математика</th><td>{{ profile.exam_math|default:"—" }}</td></tr>
+        <tr><th>ЕГЭ информатика</th><td>{{ profile.exam_info|default:"—" }}</td></tr>
+        <tr><th>ЕГЭ физика</th><td>{{ profile.exam_physics|default:"—" }}</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Статус заявки</h2>
+    <form method="post" action="{% url 'events:admin_applicant_status' applicant.pk %}" class="stack" style="max-width:none">
+      {% csrf_token %}
+      <div class="field">
+        <label for="id_status">Решение комиссии</label>
+        <select name="status" id="id_status">
+          <option value="draft" {% if profile.status == 'draft' %}selected{% endif %}>Черновик анкеты</option>
+          <option value="submitted" {% if profile.status == 'submitted' %}selected{% endif %}>Анкета подана</option>
+          <option value="reviewed" {% if profile.status == 'reviewed' %}selected{% endif %}>Рассмотрена комиссией</option>
+          <option value="invited" {% if profile.status == 'invited' %}selected{% endif %}>Приглашён к поступлению</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="id_comment">Комментарий абитуриенту</label>
+        <textarea name="comment" id="id_comment" rows="3">{{ profile.comment }}</textarea>
+      </div>
+      <button type="submit" class="btn">Сохранить решение</button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2 style="margin-top:0">Участие в мероприятиях</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Мероприятие</th><th>Дата</th><th>Статус</th><th class="num">Баллы</th></tr></thead>
+        <tbody>
+        {% for enrollment in enrollments %}
+          <tr>
+            <td><a href="{% url 'events:admin_event_detail' enrollment.event_id %}">{{ enrollment.event.title }}</a></td>
+            <td class="nowrap small">{{ enrollment.event.start_at|date:"d.m.Y H:i" }}</td>
+            <td><span class="badge badge--{{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+            <td class="num">{% if enrollment.points is not None %}{{ enrollment.points }}{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="muted">Мероприятий не посещал.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

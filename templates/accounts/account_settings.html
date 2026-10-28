@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Безопасность аккаунта</h1>
+<p class="subtitle">{{ user.email }} · {{ user.get_role_display }} · зарегистрирован {{ user.date_joined|date:"d.m.Y" }}</p>
+
+<div class="grid grid--2">
+  <div class="section">
+    <h2 style="margin-top:0">Пароль</h2>
+    <p class="small muted">Хранится как хеш Argon2id (параметры: 64 MiB памяти, 3 итерации).
+      Смена пароля не завершает текущую сессию.</p>
+    <form method="post" class="stack" style="max-width:none">
+      {% csrf_token %}
+      {% include "includes/form_fields.html" %}
+      <button type="submit" name="password" value="1" class="btn">Сменить пароль</button>
+    </form>
+  </div>
+
+  <div class="section">
+    <h2 style="margin-top:0">Двухфакторная защита</h2>
+    {% if totp_enabled %}
+      <p><span class="badge badge--attended">TOTP включена</span> — при входе запрашивается код из
+        «Яндекс Ключа» или резервный код.</p>
+      <div class="row">
+        <form method="post" action="{% url 'accounts:recovery_regenerate' %}" class="inline-form"
+              onsubmit="return confirm('Старые резервные коды перестанут работать. Продолжить?');">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--outline">Выдать новые резервные коды</button>
+        </form>
+        <a class="btn btn--outline" href="{% url 'accounts:recovery_show' %}">Показать ранее выданные</a>
+      </div>
+      <form method="post" action="{% url 'accounts:totp_disable' %}" style="margin-top:1rem"
+            onsubmit="return confirm('Отключить 2FA? При следующем входе её нужно будет настроить заново.');">
+        {% csrf_token %}
+        <div class="field">
+          <label for="id_password_off">Текущий пароль для подтверждения</label>
+          <input type="password" id="id_password_off" name="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn btn--danger">Отключить 2FA</button>
+      </form>
+    {% else %}
+      <p><span class="badge badge--draft">TOTP не настроена</span></p>
+      <a class="btn" href="{% url 'accounts:totp_setup' %}">Настроить «Яндекс Ключ»</a>
+    {% endif %}
+
+    <h2>Мессенджер MAX</h2>
+    {% if max_enabled %}
+      <p class="small">{% if max_linked %}Чат привязан — уведомления о баллах приходят в MAX.
+        {% else %}Чат не привязан.{% endif %}</p>
+      <a class="btn btn--outline" href="{% url 'accounts:max_account' %}">Настройки MAX-бота</a>
+    {% else %}
+      <p class="small muted">Интеграция с MAX отключена на сервере.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="section">
+  <div class="row spread">
+    <h2 style="margin:0">Журнал входов</h2>
+    <a class="btn btn--outline btn--sm" href="{% url 'accounts:login_log' %}">Полный журнал</a>
+  </div>
+  <p class="small muted">Фиксируются успешные входы, неудачные подборки пароля, ошибки и попытки
+    обойти второй фактор, а также выходы. Записи видны только владельцу аккаунта.</p>
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Время</th><th>Результат</th><th>IP</th><th>Устройство</th></tr></thead>
+      <tbody>
+      {% for entry in logs %}
+        <tr>
+          <td class="nowrap">{{ entry.created_at|date:"d.m.Y H:i:s" }}</td>
+          <td><span class="badge {% if entry.outcome == 'success' %}badge--attended{% elif entry.outcome == 'logout' %}{% else %}badge--cancelled{% endif %}">{{ entry.get_outcome_display }}</span></td>
+          <td class="mono small">{{ entry.ip_address|default:"—" }}</td>
+          <td class="small muted">{{ entry.user_agent|truncatechars:70 }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="muted">Записей нет.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

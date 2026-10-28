@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row spread">
+  <div>
+    <h1>{{ profile.full_name|default:user.email }}</h1>
+    <p class="subtitle">Личный кабинет абитуриента · {{ user.get_role_display }}</p>
+  </div>
+  <div class="row">
+    <span class="badge badge--{{ profile.status }}">{{ profile.get_status_display }}</span>
+    <span class="badge badge--points">Доп. баллы: {{ profile.bonus_points }}</span>
+  </div>
+</div>
+
+<div class="grid grid--4" style="margin:1.2rem 0 1.5rem">
+  <div class="stat"><div class="stat__value">{{ profile.total_exam_points }}</div>
+    <div class="stat__label">Сумма баллов ЕГЭ</div></div>
+  <div class="stat"><div class="stat__value">{{ profile.bonus_points }}</div>
+    <div class="stat__label">Доп. баллы за мероприятия</div></div>
+  <div class="stat"><div class="stat__value">{{ profile.total_exam_points|add:profile.bonus_points }}</div>
+    <div class="stat__label">Инддивидуальный конкурс</div></div>
+  <div class="stat"><div class="stat__value">{{ enrollments|length }}</div>
+    <div class="stat__label">Записей в списке</div></div>
+</div>
+
+<div class="grid grid--2">
+  <div class="section">
+    <h2 style="margin-top:0">Анкета абитуриента</h2>
+    <form method="post" class="stack" style="max-width:none">
+      {% csrf_token %}
+      <div class="form-grid">{% include "includes/form_fields.html" %}</div>
+      <div class="row">
+        <button type="submit" name="profile" value="1" class="btn">Сохранить анкету</button>
+      </div>
+    </form>
+    <form method="post" action="{% url 'accounts:submit_application' %}" style="margin-top:.8rem">
+      {% csrf_token %}
+      <button type="submit" class="btn btn--outline">Подать анкету в комиссию</button>
+    </form>
+    {% if profile.comment %}<p class="small muted">Комментарий комиссии: {{ profile.comment }}</p>{% endif %}
+  </div>
+
+  <div class="section">
+    <h2 style="margin-top:0">Мероприятия и баллы</h2>
+    {% if enrollments %}
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>Мероприятие</th><th>Дата</th><th>Статус</th><th class="num">Баллы</th></tr></thead>
+          <tbody>
+          {% for enrollment in enrollments %}
+            <tr>
+              <td>{{ enrollment.event.title }}</td>
+              <td class="nowrap">{{ enrollment.event.start_at|date:"d.m.Y H:i" }}</td>
+              <td><span class="badge badge--{{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+              <td class="num">{% if enrollment.points is not None %}{{ enrollment.points }}{% else %}—{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">Ссылка на карточку мероприятия доступна только администратору; абитуриент видит список.</p>
+    {% else %}
+      <p class="muted">Записей пока нет. Запишитесь в <a href="{% url 'events:catalog' %}>каталоге мероприятий</a>.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

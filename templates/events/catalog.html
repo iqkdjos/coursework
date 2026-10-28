@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row spread">
+  <div>
+    <h1>Мероприятия ИМиКН</h1>
+    <p class="subtitle">Запишитесь — и после участия приёмная комиссия проставит дополнительные баллы.</p>
+  </div>
+  <p class="muted small">Ближайших: <b>{{ upcoming_count }}</b></p>
+</div>
+
+<div class="grid grid--2">
+  {% for row in rows %}
+    <article class="card">
+      <div class="row spread">
+        <h2 class="card__title">{{ row.event.title }}</h2>
+        {% if row.enrolled %}<span class="badge badge--enrolled">вы записаны</span>{% endif %}
+      </div>
+      <div class="card__meta">
+        <span>{{ row.event.get_event_type_display }}</span>
+        <span>{{ row.event.start_at|date:"d.m.Y H:i" }}</span>
+        {% if row.event.location %}<span>{{ row.event.location }}</span>{% endif %}
+      </div>
+      <p class="small muted">{{ row.event.description|truncatechars:180 }}</p>
+      <div class="card__meta">
+        <span>до {{ row.event.bonus_points }} балл(ов)</span>
+        {% if row.seats_left is not None %}
+          <span>{% if row.seats_left %}свободно {{ row.seats_left }} мест{% else %}мест нет{% endif %}</span>
+        {% else %}<span>вместимость не ограничена</span>{% endif %}
+        {% if row.event.is_past %}<span class="badge badge--cancelled">прошло</span>{% endif %}
+      </div>
+      <div class="card__actions">
+        <a class="btn btn--outline btn--sm" href="{% url 'events:event_detail' row.event.pk %}">Подробнее</a>
+      </div>
+    </article>
+  {% empty %}
+    <p class="muted">Опубликованных мероприятий пока нет — загляните позже.</p>
+  {% endfor %}
+</div>
+
+{% if rows.has_other_pages %}
+  <div class="pagination">
+    {% if rows.has_previous %}<a href="?page={{ rows.previous_page_number }}">&larr; назад</a>{% endif %}
+    <span class="current">{{ rows.number }} / {{ rows.paginator.num_pages }}</span>
+    {% if rows.has_next %}<a href="?page={{ rows.next_page_number }}">вперёд &rarr;</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="section" style="max-width:760px;margin-inline:auto">
+  <h1>Подключение двухфакторной защиты</h1>
+  <p class="subtitle">Для аккаунта <b class="mono">{{ user_email }}</b>. В качестве генератора кодов подойдёт
+    «Яндекс Ключ», Google Authenticator, Aegis или FreeOTP — все они реализуют TOTP (RFC 6238).</p>
+
+  <ol class="steps">
+    <li>Установите приложение <b>«Яндекс Ключ»</b> и нажмите «Добавить» &rarr; «Отсканировать QR-код».</li>
+    <li>Отсканируйте код справа либо введите секрет вручную.</li>
+    <li>Введите шестизначный код ниже — он подтвердит, что приложение настроено верно.</li>
+  </ol>
+
+  <div class="row" style="align-items:flex-start;gap:1.6rem;margin-top:1.4rem">
+    <div>
+      <img class="qr" src="{{ setup.qr }}" alt="QR-код для приложения-аутентификатора" width="220" height="220">
+    </div>
+    <div style="flex:1;min-width:260px">
+      <p class="small muted">Секрет (base32) для ручного ввода:</p>
+      <p class="secret-box mono small">{{ setup.secret }}</p>
+      <p class="small muted">Издатель: {{  "БГУ ИМиКН" }} · логин: {{ user_email }} · шаг 30 с, 6 цифр.</p>
+      <form method="post" class="stack" style="max-width:none">
+        {% csrf_token %}
+        {% include "includes/form_fields.html" %}
+        {% if error %}<p class="nonfield">{{ error }}</p>{% endif %}
+        <button type="submit" class="btn">Подтвердить и включить 2FA</button>
+      </form>
+      <p class="small muted">Секрет показывается только сейчас и не сохраняется в открытом виде
+        после подтверждения — сервер хранит его в базе, но интерфейс больше его не выводит.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

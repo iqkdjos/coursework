@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="section" style="max-width:820px">
+  <h1>Бот в MAX</h1>
+  <p class="subtitle">Привязка личного кабинета к чату в мессенджере MAX: уведомления о начисленных
+    баллах, изменении и отмене мероприятий, а также код подтверждения входа.</p>
+
+  {% if not bot_enabled %}
+    <p class="alert alert--warning">Бот сейчас отключён: на сервере не задан
+      <span class="mono">MAX_BOT_TOKEN</span>. Привязка и уведомления станут доступны сразу после
+      того, как администратор укажет токен бота в файле <span class="mono">.env</span>.</p>
+  {% endif %}
+
+  {% if linked %}
+    <p><span class="badge badge--attended">Чат привязан</span>
+      <span class="muted small">MAX ID: <span class="mono">{{ max_user_id }}</span></span></p>
+    <div class="row">
+      <form method="post" action="{% url 'accounts:max_test_message' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn">Отправить тестовое уведомление</button>
+      </form>
+      <form method="post" action="{% url 'accounts:max_notify_toggle' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--outline">
+          Уведомления: {% if max_notify %}включены{% else %}выключены{% endif %}
+        </button>
+      </form>
+      <form method="post" action="{% url 'accounts:max_unlink' %}"
+            onsubmit="return confirm('Отвязать чат MAX от аккаунта?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--danger">Отвязать чат</button>
+      </form>
+    </div>
+  {% else %}
+    <h2>Как привязать чат</h2>
+    <ol class="steps">
+      <li>Найдите бота <span class="mono">@{{ bot_username }}</span> в MAX и нажмите «Начать».</li>
+      <li>Нажмите «Получить код привязки» ниже — код действует 15 минут.</li>
+      <li>Отправьте боту сообщение вида <span class="mono">LINK {{ link_code|default:'XXXXXXXXXXXX' }}</span>.</li>
+    </ol>
+
+    <div class="row" style="margin-top:1.2rem">
+      <form method="post" action="{% url 'accounts:max_link_start' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn" {% if not bot_enabled %}disabled{% endif %}>Получить код привязки</button>
+      </form>
+    </div>
+
+    {% if link_code %}
+      <p class="small muted" style="margin-top:1rem">Ваш код:</p>
+      <p class="secret-box mono" style="font-size:1.3rem;letter-spacing:.15em">{{ link_code }}</p>
+      <p class="small muted">Сообщение боту: <span class="mono">LINK {{ link_code }}</span></p>
+    {% endif %}
+  {% endif %}
+
+  <h2>Как это работает</h2>
+  <p class="small muted">
+    Сервер обращается к MAX Bot API (<span class="mono">platform-api2.max.ru</span>) с токеном в
+    заголовке <span class="mono">Authorization</span> и отправляет сообщения методом
+    <span class="mono">POST /messages?user_id=…</span>. Входящие события приходят на
+    <span class="mono">/max/webhook/</span>; запросы проверяются по заголовку
+    <span class="mono">X-Max-Bot-Api-Secret</span>.{% if as_second_factor %} Если чат привязан, на шаге
+    входа появляется второй вариант подтверждения — одноразовый код из чата (срок жизни
+    {{ 300 }} секунд).{% endif %}
+  </p>
+</div>
+{% endblock %}

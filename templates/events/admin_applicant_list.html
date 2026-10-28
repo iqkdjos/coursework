@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Абитуриенты</h1>
+<p class="subtitle">Данные анкет, баллы ЕГЭ и дополнительные баллы за мероприятия ИМиКН.</p>
+
+<form method="get" class="filter-bar section" style="padding:1rem">
+  <div class="field"><label for="id_q">Поиск</label>{{ form.q }}</div>
+  <div class="field"><label for="id_direction">Направление</label>{{ form.direction }}</div>
+  <div class="field"><label for="id_status">Статус анкеты</label>{{ form.status }}</div>
+  <button type="submit" class="btn btn--outline">Применить</button>
+  <a class="btn" style="color:var(--brand)" href="{% url 'events:admin_applicant_list' %}">Сбросить</a>
+</form>
+
+<div class="section table-wrap">
+  <table class="data">
+    <thead><tr><th>ФИО</th><th>Почта</th><th>Направление</th><th class="num">ЕГЭ</th><th class="num">Доп.</th><th class="num">Итого</th><th>Анкета</th><th>MAX</th></tr></thead>
+    <tbody>
+    {% for profile in profiles %}
+      <tr>
+        <td><a href="{% url 'events:admin_applicant_detail' profile.user_id %}">{{ profile.full_name|default:"без имени" }}</a></td>
+        <td class="mono small">{{ profile.user.email }}</td>
+        <td class="small">{{ profile.get_direction_display|default:"—" }}</td>
+        <td class="num">{{ profile.total_exam_points }}</td>
+        <td class="num">{{ profile.bonus_points }}</td>
+        <td class="num"><b>{{ profile.total_exam_points|add:profile.bonus_points }}</b></td>
+        <td><span class="badge badge--{% if profile.status == 'submitted' %}enrolled{% elif profile.status == 'invited' %}attended{% elif profile.status == 'reviewed' %}published{% else %}draft{% endif %}">{{ profile.get_status_display }}</span></td>
+        <td>{% if profile.user.max_user_id %}<span class="badge badge--attended">привязан</span>{% else %}<span class="badge">нет</span>{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="8" class="muted">Никого не найдено.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if profiles.has_other_pages %}
+  <div class="pagination">
+    {% if profiles.has_previous %}<a href="?page={{ profiles.previous_page_number }}&q={{ form.q.value|default:'' }}">&larr;</a>{% endif %}
+    <span class="current">{{ profiles.number }} / {{ profiles.paginator.num_pages }}</span>
+    {% if profiles.has_next %}<a href="?page={{ profiles.next_page_number }}&q={{ form.q.value|default:'' }}">вперёд &rarr;</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

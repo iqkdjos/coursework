@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row spread">
+  <h1>Мероприятия — управление</h1>
+  <a class="btn" href="{% url 'events:admin_event_create' %}">+ Новое мероприятие</a>
+</div>
+
+<form method="get" class="filter-bar section" style="padding:1rem">
+  <div class="field">
+    <label for="id_status">Статус</label>
+    {{ form.status }}
+  </div>
+  <div class="field">
+    <label for="id_event_type">Тип</label>
+    {{ form.event_type }}
+  </div>
+  <button type="submit" class="btn btn--outline">Применить</button>
+  <a class="btn btn--ghost" style="color:var(--brand)" href="{% url 'events:admin_event_list' %}">Сбросить</a>
+</form>
+
+<div class="section table-wrap">
+  <table class="data">
+    <thead><tr><th>Название</th><th>Тип</th><th>Начало</th><th class="num">Записано</th><th class="num">Баллы</th><th>Статус</th><th></th></tr></thead>
+    <tbody>
+    {% for event in events %}
+      <tr>
+        <td><a href="{% url 'events:admin_event_detail' event.pk %}">{{ event.title }}</a></td>
+        <td class="small">{{ event.get_event_type_display }}</td>
+        <td class="nowrap">{{ event.start_at|date:"d.m.Y H:i" }}</td>
+        <td class="num">{{ event.enrolled|default:0 }}{% if event.capacity %}/{{ event.capacity }}{% endif %}</td>
+        <td class="num">{{ event.bonus_points }}</td>
+        <td><span class="badge badge--{{ event.status }}">{{ event.get_status_display }}</span></td>
+        <td class="actions"><a class="btn btn--outline btn--sm" href="{% url 'events:admin_event_update' event.pk %}">Править</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="muted">Мероприятий не найдено.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if events.has_other_pages %}
+  <div class="pagination">
+    {% if events.has_previous %}<a href="?page={{ events.previous_page_number }}&status={{ form.status.value|default:'' }}">&larr;</a>{% endif %}
+    <span class="current">{{ events.number }} / {{ events.paginator.num_pages }}</span>
+    {% if events.has_next %}<a href="?page={{ events.next_page_number }}&status={{ form.status.value|default:'' }}">вперёд &rarr;</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

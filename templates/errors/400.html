@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="section" style="max-width:620px;margin-inline:auto;text-align:center">
+  <p class="mono muted">HTTP {{ status }}</p>
+  <h1>{{ page_title }}</h1>
+  <p class="subtitle">{{ error_message }}</p>
+  <a class="btn" href="{% url 'home' %}">На главную</a>
+</div>
+{% endblock %}

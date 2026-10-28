@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Панель приёмной комиссии</h1>
+<p class="subtitle">Управление мероприятиями ИМиКН и баллами абитуриентов.</p>
+
+<div class="grid grid--4">
+  <div class="stat"><div class="stat__value">{{ stats.applicants }}</div><div class="stat__label">Абитуриентов в системе</div></div>
+  <div class="stat"><div class="stat__value">{{ stats.applications_submitted }}</div><div class="stat__label">Анкет подано</div></div>
+  <div class="stat"><div class="stat__value">{{ stats.events_published }}</div><div class="stat__label">Опубликовано мероприятий</div></div>
+  <div class="stat"><div class="stat__value">{{ stats.enrollments }}</div><div class="stat__label">Активных записей</div></div>
+  <div class="stat"><div class="stat__value">{{ stats.points_total }}</div><div class="stat__label">Начислено баллов всего</div></div>
+  <div class="stat"><div class="stat__value">{{ stats.events_total }}</div><div class="stat__label">Мероприятий всего</div></div>
+</div>
+
+<div class="grid grid--2" style="margin-top:1.4rem">
+  <div class="section">
+    <div class="row spread">
+      <h2 style="margin:0">Ближайшие мероприятия</h2>
+      <a class="btn btn--sm" href="{% url 'events:admin_event_create' %}">+ Создать</a>
+    </div>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Название</th><th>Начало</th><th class="num">Записано</th><th>Статус</th></tr></thead>
+        <tbody>
+        {% for event in upcoming %}
+          <tr>
+            <td><a href="{% url 'events:admin_event_detail' event.pk %}">{{ event.title }}</a></td>
+            <td class="nowrap">{{ event.start_at|date:"d.m.Y H:i" }}</td>
+            <td class="num">{{ event.enrollments_count }}{% if event.capacity %} / {{ event.capacity }}{% endif %}</td>
+            <td><span class="badge badge--{{ event.status }}">{{ event.get_status_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="muted">Запланированных мероприятий нет.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:1rem">
+      <a class="btn btn--outline btn--sm" href="{% url 'events:admin_event_list' %}">Все мероприятия</a>
+      <a class="btn btn--outline btn--sm" href="{% url 'events:admin_applicant_list' %}">Абитуриенты</a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 style="margin-top:0">Безопасность и интеграции</h2>
+    <ul class="small">
+      <li>Хеширование паролей: <b>Argon2id</b> (PBKDF2 — резервный алгоритм).</li>
+      <li>Второй фактор: <b>TOTP</b> («Яндекс Ключ»), резервные коды, ограничение попыток.</li>
+      <li>Сессия: 30 минут бездействия, <span class="mono">HttpOnly</span>, <span class="mono">SameSite=Lax</span>, обязательное прохождение 2FA.</li>
+      <li>Заголовки: <span class="mono">X-Frame-Options: DENY</span>, HSTS, <span class="mono">nosniff</span>, Referrer-Policy.</li>
+      <li>СУБД: <b>PostgreSQL</b> (таблицы <span class="mono">events_event</span>, <span class="mono">accounts_applicantprofile</span>).</li>
+      <li>Бот MAX: {% if bot_enabled %}<span class="badge badge--attended">подключён</span>{% else %}<span class="badge badge--draft">нет токена</span>{% endif %}</li>
+    </ul>
+    <h2>Последние события входа</h2>
+    <div class="table-wrap">
+      <table class="data">
+        <thead><tr><th>Время</th><th>Учётная запись</th><th>Результат</th></tr></thead>
+        <tbody>
+        {% for entry in logs %}
+          <tr>
+            <td class="nowrap small">{{ entry.created_at|date:"d.m.Y H:i" }}</td>
+            <td class="mono small">{{ entry.identifier|default:"—" }}</td>
+            <td><span class="badge {% if entry.outcome == 'success' %}badge--attended{% else %}badge--cancelled{% endif %}">{{ entry.get_outcome_display }}</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="muted">Нет записей.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

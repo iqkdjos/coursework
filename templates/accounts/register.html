@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card wide">
+  <h1>Регистрация абитуриента</h1>
+  <p class="subtitle center">Аккаунт создаёт сам абитуриент; роль «администратор» выдаёт приёмная комиссия.</p>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    {% include "includes/form_fields.html" %}
+    <fieldset>
+      <legend>Требования к паролю</legend>
+      <p class="small muted" style="margin:0">Не короче 10 символов; не может быть полностью числовым, совпадать с почтой или входить в список распространённых паролей. Пароль хранится в виде хеша Argon2id.</p>
+    </fieldset>
+    <button type="submit" class="btn">Создать аккаунт и настроить 2FA</button>
+  </form>
+  <p class="auth-alt">Уже зарегистрированы? <a href="{% url 'accounts:login' %}">Войти</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card">
+  <h1>Вход в систему</h1>
+  <p class="subtitle center">Абитуриенты ИМиКН БГУ: почта, пароль и второй фактор из «Яндекс Ключа».</p>
+  <form method="post" action="{% url 'accounts:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="stack" autocomplete="on">
+    {% csrf_token %}
+    {% include "includes/form_fields.html" %}
+    <button type="submit" class="btn">Далее — подтверждение 2FA</button>
+  </form>
+  <p class="auth-alt">Нет аккаунта? <a href="{% url 'accounts:register' %}">Зарегистрируйтесь</a></p>
+</div>
+{% endblock %}

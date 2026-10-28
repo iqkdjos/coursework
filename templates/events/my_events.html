@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Мои записи</h1>
+<p class="subtitle">Все попытки записи на мероприятия института, включая отменённые.</p>
+<div class="section table-wrap">
+  <table class="data">
+    <thead><tr><th>Мероприятие</th><th>Тип</th><th>Начало</th><th>Записан</th><th>Статус</th><th class="num">Баллы</th></tr></thead>
+    <tbody>
+    {% for enrollment in enrollments %}
+      <tr>
+        <td><a href="{% url 'events:event_detail' enrollment.event_id %}">{{ enrollment.event.title }}</a></td>
+        <td class="small">{{ enrollment.event.get_event_type_display }}</td>
+        <td class="nowrap">{{ enrollment.event.start_at|date:"d.m.Y H:i" }}</td>
+        <td class="nowrap small">{{ enrollment.registered_at|date:"d.m.Y H:i" }}</td>
+        <td><span class="badge badge--{{ enrollment.status }}">{{ enrollment.get_status_display }}</span></td>
+        <td class="num">{% if enrollment.points is not None %}{{ enrollment.points }}{% else %}—{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6" class="muted">Записей нет.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if enrollments.has_other_pages %}
+  <div class="pagination">
+    {% if enrollments.has_previous %}<a href="?page={{ enrollments.previous_page_number }}">&larr;</a>{% endif %}
+    <span class="current">{{ enrollments.number }} / {{ enrollments.paginator.num_pages }}</span>
+    {% if enrollments.has_next %}<a href="?page={{ enrollments.next_page_number }}">&rarr;</a>{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

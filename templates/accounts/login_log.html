@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Журнал входов</h1>
+<p class="subtitle">Последние {{ logs|length }} событий вашей учётной записи.</p>
+<div class="section table-wrap">
+  <table class="data">
+    <thead><tr><th>Время</th><th>Введено почты</th><th>Результат</th><th>IP</th><th>User-Agent</th></tr></thead>
+    <tbody>
+    {% for entry in logs %}
+      <tr>
+        <td class="nowrap">{{ entry.created_at|date:"d.m.Y H:i:s" }}</td>
+        <td class="mono small">{{ entry.identifier|default:"—" }}</td>
+        <td><span class="badge {% if entry.outcome == 'success' %}badge--attended{% elif entry.outcome == 'logout' %}{% else %}badge--cancelled{% endif %}">{{ entry.get_outcome_display }}</span></td>
+        <td class="mono small">{{ entry.ip_address|default:"—" }}</td>
+        <td class="small muted">{{ entry.user_agent|truncatechars:60 }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="muted">Записей нет.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p><a class="btn btn--outline" href="{% url 'accounts:account_settings' %}">Назад к безопасности</a></p>
+{% endblock %}

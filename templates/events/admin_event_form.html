@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ page_title }}</h1>
+<p class="subtitle">Статус «Опубликовано» открывает мероприятие для абитуриентов; после публикации
+   всем записавшимся уходит уведомление в MAX, если чат привязан.</p>
+
+<div class="section">
+  <form method="post" class="stack" style="max-width:760px">
+    {% csrf_token %}
+    {% include "includes/form_fields.html" %}
+    <div class="row">
+      <button type="submit" class="btn">Сохранить</button>
+      <a class="btn btn--outline" href="{% url 'events:admin_event_list' %}">Отмена</a>
+    </div>
+  </form>
+</div>
+
+{% if event %}
+  <form method="post" action="{% url 'events:admin_event_delete' event.pk %}"
+        onsubmit="return confirm('Удалить мероприятие и все записи на него? Действие необратимо.');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--danger">Удалить мероприятие</button>
+  </form>
+{% endif %}
+{% endblock %}

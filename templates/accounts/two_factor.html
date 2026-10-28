@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="auth-card">
+  <h1>Шаг 2. Подтверждение входа</h1>
+  <p class="subtitle center">Пароль принят для <b class="mono">{{ user_email }}</b>. Введите одноразовый код.</p>
+
+  {% if failures_left is not None %}
+    <p class="small muted center">Попыток до временной блокировки: <b>{{ failures_left }}</b></p>
+  {% endif %}
+
+  <form method="post" class="stack">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" name="action" value="totp" class="btn">Подтвердить кодом из «Яндекс Ключ»</button>
+    <div class="field">
+      <label for="id_code">Код из приложения (6 цифр)</label>
+      {{ totp_form.code }}
+      <span class="hint">Код меняется каждые {{ totp_period }} секунд. Если приложение не открыто — откройте «Яндекс Ключ».</span>
+    </div>
+  </form>
+
+  <hr>
+
+  {% if max_allowed %}
+    <h2>Код в чате MAX</h2>
+    <form method="post" class="stack">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <button type="submit" name="action" value="max_send" class="btn btn--outline">Прислать код в MAX</button>
+      <div class="field">
+        <label for="id_max_code">Код из MAX</label>
+        {{ max_form.code }}
+      </div>
+      <button type="submit" name="action" value="max" class="btn">Подтвердить кодом из MAX</button>
+    </form>
+  {% else %}
+    <p class="small muted">Код в MAX доступен после привязки чата и настройки бота администратором.</p>
+  {% endif %}
+
+  <hr>
+
+  <h2>Резервный код</h2>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="field">
+      <label for="id_recovery">Одноразовый резервный код</label>
+      {{ recovery_form.code }}
+      <span class="hint">Выдан при подключении 2FA. Расходуется один раз.</span>
+    </div>
+    <button type="submit" name="action" value="recovery" class="btn btn--outline">Войти по резервному коду</button>
+  </form>
+
+  <p class="auth-alt"><a href="{% url 'accounts:login' %}">Отменить и войти другим аккаунтом</a></p>
+</div>
+{% endblock %}

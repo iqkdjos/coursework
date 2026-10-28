@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="small"><a href="{% url 'events:catalog' %}">&larr; Все мероприятия</a></p>
+
+<div class="section">
+  <div class="row spread">
+    <h1>{{ event.title }}</h1>
+    <span class="badge badge--{{ event.status }}">{{ event.get_status_display }}</span>
+  </div>
+  <div class="card__meta" style="margin:.4rem 0 1rem">
+    <span>{{ event.get_event_type_display }}</span>
+    <span>начало {{ event.start_at|date:"d.m.Y H:i" }}</span>
+    {% if event.end_at %}<span>окончание {{ event.end_at|date:"d.m.Y H:i" }}</span>{% endif %}
+    {% if event.location %}<span>{{ event.location }}</span>{% endif %}
+    <span>до {{ event.bonus_points }} доп. баллов</span>
+  </div>
+
+  <p>{{ event.description|linebreaksbr }}</p>
+
+  <p class="small muted">
+    {% if seats_left is not None %}Свободных мест: <b>{{ seats_left }}</b> из {{ event.capacity }}.{% else %}Количество участников не ограничено.{% endif %}
+    {% if event.created_by %} Организатор: {{ event.created_by.email }}.{% endif %}
+  </p>
+
+  <hr style="border:none;border-top:1px solid var(--line);margin:1.2rem 0">
+
+  {% if enrollment %}
+    <p><span class="badge badge--enrolled">{{ enrollment.get_status_display }}</span>
+      <span class="small muted">запись от {{ enrollment.registered_at|date:"d.m.Y H:i" }}</span>
+      {% if enrollment.points is not None %}<span class="badge badge--points">баллы: {{ enrollment.points }}</span>{% endif %}
+    </p>
+    {% if enrollment.note %}<p class="small muted">Ваш комментарий: {{ enrollment.note }}</p>{% endif %}
+    <form method="post" action="{% url 'events:event_cancel' event.pk %}"
+          onsubmit="return confirm('Отменить запись на мероприятие?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn--danger">Отменить запись</button>
+    </form>
+  {% elif enroll_ok %}
+    <form method="post" action="{% url 'events:event_enroll' event.pk %}" class="stack" style="max-width:520px">
+      {% csrf_token %}
+      <div class="field">
+        <label for="id_note">Комментарий для организатора (необязательно)</label>
+        <textarea name="note" id="id_note" rows="2" maxlength="250"
+                  placeholder="Например: приду с сопровождающим, нужен ноутбук"></textarea>
+      </div>
+      <button type="submit" class="btn">Записаться на мероприятие</button>
+    </form>
+    <p class="small muted">Запись доступна, пока мероприятие опубликовано, не началось и есть свободные места.</p>
+  {% else %}
+    <p class="alert alert--warning">{{ enroll_reason|default:"Запись закрыта." }}</p>
+  {% endif %}
+</div>
+{% endblock %}
